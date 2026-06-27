@@ -4,7 +4,7 @@ A production-grade URL shortener service engineered for high throughput, structu
 
 ---
 
-## 1. System Architecture & Tech Stack Rationale
+## 1. System Architecture Overview
 
 ### 1.1 Deployment & Infrastructure Strategy
 The platform architecture is structured as a completely decoupled, modern three-tier infrastructure designed for high throughput, minimal operational contention, and near-zero latency redirection pathways:
