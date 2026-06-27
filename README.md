@@ -48,6 +48,7 @@ To protect the database state layers under peak read amplification, the redirect
               | (24-Hour TTL)   |  |  PostgreSQL DB   |  
               +-----------------+  +------------------+
 ```
+```
 ### 1.3 Technical Stack Justification
 * **Runtime & Language:** **Node.js (TypeScript)**. Combines the non-blocking, event-driven asynchronous I/O of Node with strict compile-time type safety, entirely eliminating runtime reference exceptions and standard structural regressions.
 * **Web Framework:** **Fastify**. Selected over traditional frameworks like Express due to its ultra-low routing overhead, built-in encapsulated plugin model, and accelerated Ajv-driven JSON schema validation engine.
