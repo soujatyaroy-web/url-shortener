@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { promises as dns } from 'dns';
 import { Base62Service } from '../services/Base62Service';
 
 interface ShortenRequestBody {
@@ -35,6 +36,42 @@ const shortenRouteSchema = {
   }
 };
 
+const isValidLongUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+
+    const hostname = parsed.hostname;
+    if (!hostname) {
+      return false;
+    }
+
+    const isIp = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+    if (isIp) {
+      return hostname.split('.').every((segment) => {
+        const num = Number(segment);
+        return Number.isInteger(num) && num >= 0 && num <= 255;
+      });
+    }
+
+    return hostname === 'localhost' || hostname.includes('.');
+  } catch {
+    return false;
+  }
+};
+
+const isResolvableHost = async (value: string) => {
+  try {
+    const parsed = new URL(value);
+    await dns.lookup(parsed.hostname);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const urlRoutes: FastifyPluginAsync = async (fastify, options) => {
   const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -46,6 +83,20 @@ const urlRoutes: FastifyPluginAsync = async (fastify, options) => {
 
       try {
         const { long_url } = request.body;
+
+        if (!isValidLongUrl(long_url)) {
+          return reply.status(400).send({
+            error: 'Invalid URL',
+            message: 'URL must be a valid http:// or https:// address.'
+          });
+        }
+
+        if (!(await isResolvableHost(long_url))) {
+          return reply.status(400).send({
+            error: 'Invalid URL',
+            message: 'URL host could not be resolved. Please enter a valid URL.'
+          });
+        }
 
         // Step 1: Insert to get a sequence ID
         const { data: insertData, error: insertError } = await supabase
@@ -60,7 +111,7 @@ const urlRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
 
         insertedId = insertData.id;
-        const short_code = base62.encode(insertedId);
+        const short_code = base62.encode(insertedId as number);
 
         // Step 2: Finalize entry
         const { error: updateError } = await supabase
@@ -84,7 +135,11 @@ const urlRoutes: FastifyPluginAsync = async (fastify, options) => {
       } catch (error) {
         if (insertedId) {
           // Safety cleanup catch-all
-          await supabase.from('urls').delete().eq('id', insertedId).catch(() => {});
+          try {
+            await supabase.from('urls').delete().eq('id', insertedId);
+          } catch {
+            // ignore cleanup failure
+          }
         }
         request.log.error({ err: error }, 'Unexpected router crash');
         return reply.status(500).send({ error: 'Internal Error', message: 'An unexpected exception occurred.' });

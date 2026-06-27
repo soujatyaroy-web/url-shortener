@@ -20,6 +20,8 @@ describe('URL Redirect Routes - /:shortCode', () => {
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    process.env.REDIS_URL = 'redis://localhost:6379';
+    delete process.env.REDIS_DISABLED;
 
     // Re-import mocks after module reset
     const { createClient } = require('@supabase/supabase-js');
@@ -34,7 +36,7 @@ describe('URL Redirect Routes - /:shortCode', () => {
       setex: jest.fn().mockResolvedValue('OK')
     };
 
-    RedisMock.mockReturnValue(mockRedis);
+    RedisMock.mockImplementation(() => mockRedis);
 
     // Setup mock Supabase client
     mockSupabase = {
@@ -91,6 +93,23 @@ describe('URL Redirect Routes - /:shortCode', () => {
   });
 
   describe('Route Registration', () => {
+    it('should not instantiate Redis when REDIS_URL is not configured', async () => {
+      delete process.env.REDIS_URL;
+      jest.resetModules();
+      jest.clearAllMocks();
+
+      const { createClient } = require('@supabase/supabase-js');
+      const Redis = require('ioredis');
+
+      createClient.mockReturnValue(mockSupabase);
+      Redis.mockImplementation(() => mockRedis);
+
+      const redirectRoutesWithoutRedis = require('../../src/routes/redirectRoutes').default;
+      await redirectRoutesWithoutRedis(mockFastify as FastifyInstance, {});
+
+      expect(Redis).not.toHaveBeenCalled();
+    });
+
     it('should register GET /:shortCode route', async () => {
       await redirectRoutes(mockFastify as FastifyInstance, {});
 

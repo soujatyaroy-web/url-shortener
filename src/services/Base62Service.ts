@@ -13,7 +13,7 @@ export class Base62Service {
   constructor() {
     this.charMap = new Map<string, number>();
     for (let i = 0; i < this.BASE; i++) {
-      this.charMap.set(this.ALPHABET[i], i);
+      this.charMap.set(this.ALPHABET[i]!, i);
     }
   }
 
@@ -32,7 +32,7 @@ export class Base62Service {
 
     // Explicit edge case handling for 0
     if (id === 0) {
-      return this.ALPHABET[0];
+      return this.ALPHABET[0]!;
     }
 
     const resultChars: string[] = [];
@@ -41,7 +41,7 @@ export class Base62Service {
     // Use an array to store fragments, eliminating string allocation thrashing
     while (currentId > 0) {
       const remainder = currentId % this.BASE;
-      resultChars.push(this.ALPHABET[remainder]);
+      resultChars.push(this.ALPHABET[remainder]!);
       currentId = Math.floor(currentId / this.BASE);
     }
 
@@ -62,7 +62,7 @@ export class Base62Service {
 
     for (let i = 0; i < code.length; i++) {
       const char = code[i];
-      const charValue = this.charMap.get(char);
+      const charValue = this.charMap.get(char as string);
 
       if (charValue === undefined) {
         throw new Error(`Invalid Base62 character encountered: '${char}' at index ${i}.`);

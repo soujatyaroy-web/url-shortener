@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>URL Shortener</h1>
+      <p>Submit a long URL and get a clean, shareable short link.</p>
+
+      <form id="shorten-form">
+        <label for="longUrl">Enter your long URL</label>
+        <textarea id="longUrl" name="longUrl" rows="4" maxlength="2048" placeholder="https://example.com/very/long/path" required></textarea>
+        <div class="helper-row">
+          <span id="charCount">0 / 2048</span>
+          <span class="hint">Must begin with <strong>http://</strong> or <strong>https://</strong>.</span>
+        </div>
+
+        <button type="submit" id="submitButton">Shorten URL</button>
+      </form>
+
+      <div id="message" class="message hidden"></div>
+      <div id="result" class="result hidden">
+        <p>Short URL:</p>
+        <a id="shortLink" href="#" target="_blank" rel="noreferrer noopener"></a>
+        <button id="copyButton" class="small-button">Copy</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="urlShortener.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

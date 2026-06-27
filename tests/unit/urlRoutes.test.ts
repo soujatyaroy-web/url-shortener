@@ -259,7 +259,7 @@ describe('URL Shortener Routes - /api/v1/shorten', () => {
       ]);
     });
 
-    it('should not allow SQL injection in URL field', async () => {
+    it('should reject malformed URLs that contain invalid hostnames', async () => {
       const sqlInjection = "https://example.com'; DROP TABLE urls; --";
       mockRequest.body = { long_url: sqlInjection };
 
@@ -268,9 +268,8 @@ describe('URL Shortener Routes - /api/v1/shorten', () => {
 
       await routeHandler(mockRequest, mockReply);
 
-      // Supabase uses parameterized queries, so SQL injection is mitigated
-      expect(mockSupabase.from('urls').insert).toHaveBeenCalled();
-      // The string is passed as data, not as query code
+      expect(replyStatusSpy).toHaveBeenCalledWith(400);
+      expect(mockSupabase.from('urls').insert).not.toHaveBeenCalled();
     });
 
     it('should handle URLs with special characters safely', async () => {
