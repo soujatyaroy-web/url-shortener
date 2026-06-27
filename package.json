@@ -7,7 +7,8 @@
     "dev": "node api/server.js",
     "start": "node api/server.js",
     "serve:frontend": "node frontend-server.js",
-    "test": "jest"
+    "test": "jest",
+    "build:frontend": "node frontend/write-config.js"
   },
   "keywords": [],
   "author": "",
