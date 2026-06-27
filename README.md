@@ -1,6 +1,6 @@
 # AI-Assisted URL Shortener Service
 
-A production-grade, asynchronous URL shortener service engineered for high throughput, structural integrity, and minimal redirection latency. This platform utilizes a modern three-tier decoupled architecture to separate static front-end asset delivery from highly optimized, type-safe backend execution paths.
+A production-grade URL shortener service engineered for high throughput, structural integrity, and minimal redirection latency. This platform utilizes a modern three-tier decoupled architecture to separate static front-end asset delivery from highly optimized, type-safe backend execution paths.
 
 ---
 
@@ -200,12 +200,14 @@ To safely refactor the codebase for analytics integration, the following enginee
 3.  **Configure Environment Variables:**
     Duplicate the `.env.example` file and rename it to `.env`. Populate it with your active Supabase and Redis connection keys:
     ```bash
-    cp .env.example .env
     # Open .env and add your SUPABASE_URL, SUPABASE_KEY, and REDIS_URL
     ```
 4.  **Execute the local development server:**
     ```bash
     npm run dev
+    ```
+    ```bash
+    npm run serve:frontend
     ```
 5.  **Run the automated test suite:**
     ```bash
