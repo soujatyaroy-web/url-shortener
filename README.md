@@ -84,6 +84,7 @@ _Acceptance Criteria:_
 **AC4**: Given the user is typing, when characters are entered, then the counter at the bottom-left corner must update in real-time to display the current character count relative to the 2,048 limit (e.g., "5 / 2048").   
 **AC5**: Given the user is viewing the page, when they look at the bottom-right corner of the text area, then they must see the instructional text: "Must begin with http:// or https://".   
 **AC6**: Given the user has entered content, when they look at the button below the text area, then it must be labeled "Shorten URL" and span the full width of the input area.  
+
 **US_002: Validate Entered URL**  
 As a user, I want to receive a warning if my URL does not start with the correct protocol or is invalid, so that I can rectify the url.  
 
@@ -107,6 +108,13 @@ Resulting Token: Reverse of remainder chain $\rightarrow$ 3d7
 **AC3**: Given the application has been inactive for more than 15 minutes (i.e., no clicks on the "Shorten URL" button during this period), when I click the "Shorten URL" button, then the response may be delayed due to cold-start overhead, but must be rendered in less than equal to 60 seconds.  
 **AC4**: Given a generated Short URL, when I copy and paste it into a browser, then the system must correctly decode the Base62 token back to the specific Primary Key and redirect me to the original long URL stored in the database.  
 
+**US_004: Redirect Short URL to Original Destination**  
+As a user, I want to copy the short URL and click on it to reach my original destination, so that I can easily access the long URL without having to handle the complex, original address.    
+
+_Acceptance Criteria:_  
+**AC1**: Given I have a valid short URL, when I copy it to my clipboard and paste/click it in a browser, then the application must resolve the Base62 token, look up the corresponding long_url, and redirect to the destination URL.  
+**AC2**: Given I am using a short URL that has been deleted or was never generated, when I navigate to that URL, then the system must display an error page with the message: "The requested short URL does not exist."  
+
 **Enabler Story**  
 **ES_001: Base62 Implementation & Cold-Start Tuning**  
 As an Engineering Team, we need to implement the Base62 conversion logic and configure infrastructure cold-start behaviors, so that we satisfy both the performance SLA for active users and the cold-start constraints for inactive periods.  
@@ -120,15 +128,9 @@ long_url: text (Required/Not Null)
 short_code: varchar (Unique Index, to store the Base62 encoded string)  
 created_at: timestamptz (Default: NOW())   
 expires_at: timestamptz  
-**E2**: An index must be applied to the short_code column to ensure that redirect resolutions (looking up long_url by short_code) perform in $O(1)$ or $O(\log n)$ time, maintaining the required SLA.   
+**E2**: An index must be applied to the short_code column to ensure that redirect resolutions (looking up long_url by short_code) perform in $O(1)$ or $O(\log n)$ time, maintaining the required SLA.  
 
-### 3.3 AI Execution Traceability
-* **Intent:** Leverage Copilot to implement the mathematical Base62 conversions safely.
-* **AI Output:** Initially generated a standard string-hashing algorithm susceptible to collisions.
-* **Human Intervention:** Rejected the initial approach. Refactored the prompt to specify a deterministic mapping based on an auto-incrementing integer input (`id`).
-* **Refined Output:** The final `Base62Service` converts an integer database ID into a predictable short code, achieving high computational efficiency and strict reliability.
-
-### 3.4 Input Validation Guardrails
+### 3.3 Input Validation Guardrails
 The system implements strict, layered input-validation routines on the backend to prevent corrupted records or malicious injection attacks from interacting with the data layer:
 * **Syntactic Validation:** Rejects any input lacking explicit structural protocols. Returning:
     ```json
@@ -159,13 +161,13 @@ As an Engineering Team, we need to implement Vercel Analytics directly into the 
 **E1**: Integrate Vercel Analytics injecting the required dependencies to capture client-side analytics.   
 
 **User Stories:**
-**US_004: Administrative Analytics Dashboard**  
+**US_005: Administrative Analytics Dashboard**  
 As an Admin of this application, I want to view visitor analytics, page views, and bounce rates as a time-series graph directly within my Vercel account, so that I can monitor traffic trends and user engagement metrics to optimize the platform performance.  
 _Acceptance Criteria:_
 **AC1**: Given that Vercel Analytics is enabled for the project, when I log into the Vercel dashboard and navigate to the "Analytics" tab, then I must be able to view a time-series graph displaying Visitor counts, total Page Views, and Bounce Rates.  
 **AC2**: Given that I am viewing the analytics graph, when I adjust the date-range picker, then the time-series graph must dynamically refresh to show the data corresponding to the selected timeframe.  
  
-### 4.2 Quality Gates & Refactoring Safety
+### 4.2 Quality Gates
 To safely refactor the codebase for redis implementation and analytics integration, the following engineering quality gates were enforced:
 * **Strict Type Auditing:** All updated modules were processed through the TypeScript compiler (`tsc --noEmit`) to guarantee that modifications to database schemas did not break existing controller contracts.
 * **Automated Unit Testing:** The existing Unit test suite was run before and after code changes to confirm that o verify that individual, isolated components of code work exactly as intended.  
