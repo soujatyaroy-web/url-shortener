@@ -95,7 +95,7 @@ This prototype was developed utilizing a disciplined **Engineer-in-the-Loop** ex
 ## 3. Scenario 1: Core URL Shortener
 
 ### 3.1 Requirements
-The baseline specification required converting an arbitrary URL into a shortened, shareable token. Ambiguities regarding key collisions and hash mechanics were resolved by choosing a deterministic **Base62 encoding sequence** over loose pseudo-random string hashing. By converting an auto-incrementing integer database primary key into characters (`[0-9a-zA-Z]`), string collisions are mathematically impossible, completely eliminating the need for expensive "retry-on-collision" application blocks.
+Ability to convert an arbitrary URL into a shortened, shareable token with necessary input validations and redirection to the original url from the short url.  
 
 ### 3.2 Task Decomposition
 **User Stories:**
@@ -172,7 +172,7 @@ The system implements strict, layered input-validation routines on the backend t
 
 ### 4.1 Requirement
 Integrating analytical telemetry using Vercel Analytics to the existing frontend components and introducing Redis cache for redirection performance improvement
-1.  **Frontend User Telemetry:** **Vercel Analytics** was injected directly into the UI application layer to capture real-time client-side performance, session details, and geographic distribution without utilizing server compute resources.
+
 ### 4.3 Task Decomposition
 **Enabler Story**  
 **ES_003: Redis Cache Implementation**  
