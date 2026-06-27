@@ -49,12 +49,35 @@ To protect the database state layers under peak read amplification, the redirect
               +-----------------+  +------------------+
 ```
 ```
-### 1.3 Technical Stack Justification
+### 1.3 Technical Stack & KDD
 * **Runtime & Language:** **Node.js (TypeScript)**. Combines the non-blocking, event-driven asynchronous I/O of Node with strict compile-time type safety, entirely eliminating runtime reference exceptions and standard structural regressions.
 * **Web Framework:** **Fastify**. Selected over traditional frameworks like Express due to its ultra-low routing overhead, built-in encapsulated plugin model, and accelerated Ajv-driven JSON schema validation engine.
 * **Database Interface:** **Supabase JS Client**. Leverages a highly optimized client interface for structured data operations, optimizing payload size and connection utilization over long-lived stateful TCP pools.
 
----
+**KDD1: Short Code Generation Approach**
+
+**Option A**: Cryptographic or Pseudo-Random String Hashing (e.g., MD5/SHA-256 truncated to 6–8 characters).  
+_Pros:_ Decentralized and independent of a central database sequence; short codes are entirely unpredictable, preventing token enumeration.  
+_Cons:_ High statistical probability of hash collisions at scale. Resolving collisions requires writing expensive "retry-on-collision" application loops and extra read operations against the database before insertion, significantly increasing development effort and testing complexity.  
+
+**Option B**: Sequential Auto-Incrementing Integer IDs mapped to a deterministic Base62 encoding utility string ([0-9a-zA-Z]).  
+_Pros:_ Extremely low development effort. Guarantees mathematical uniqueness because every auto-incrementing integer maps to a single Base62 string. Zero storage collision risk completely eliminates the need to write complex database validation or query retry logic.  
+_Cons:_ Predictable token generation sequences allow sequential URL enumeration unless obfuscated. 
+
+**Decision Summary: Option B**: To ensure high performance execution & low effort development.  
+
+**KDD2: Redirection Path Approach**
+
+**Option A**: Direct Relational Queries against the Supabase PostgreSQL database for every incoming request.   
+_Pros:_ The easiest deployment model and the absolute lowest development effort.  
+_Cons:_ High read traffic spikes can easily bottleneck the relational DB.    
+
+**Option B**: Dual-Stage Caching.  
+_Pros:_ Achieves ultra-fast read speeds and shields the primary database from read spikes.    
+_Cons:_ Slightly higher deployment and configuration effort. 
+
+**Decision Summary: Option B**: Inclusion of an asynchronous cache layer provides reliability and improved performance.
+
 
 ## 2. AI-Assisted Engineering Framework
 
