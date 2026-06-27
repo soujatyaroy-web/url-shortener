@@ -216,6 +216,6 @@ To safely refactor the codebase for analytics integration, the following enginee
 
 #### Create a Shortened URL
 ```bash
-curl -X POST http://localhost:3000/api/shorten \
-  -H "Content-Type: application/json" \
-  -d '{"long_url": "[https://www.google.com](https://www.google.com)"}'
+Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/v1/shorten" `
+  -Headers @{"Content-Type" = "application/json"} `
+  -Body '{"long_url": "https://www.google.com"}'
