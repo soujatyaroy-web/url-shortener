@@ -147,24 +147,33 @@ The system implements strict, layered input-validation routines on the backend t
 Integrating analytical telemetry using Vercel Analytics to the existing frontend components and introducing Redis cache for redirection performance improvement
 1.  **Frontend User Telemetry:** **Vercel Analytics** was injected directly into the UI application layer to capture real-time client-side performance, session details, and geographic distribution without utilizing server compute resources.
 ### 4.3 Task Decomposition
+**Enabler Story**  
+**ES_003: Redis Cache Implementation**  
+As an Engineering Team, we need to implement the integrate an in-memory Redis caching tier with a 24-hour Time-to-Live (TTL) into the redirection path, so that we can achieve O(1) read lookups, optimize response times under peak read amplification, and protect the Supabase PostgreSQL database from connection thrashing.  
+**E1**: Cache-Aside Read: The route handler will intercept incoming requests at GET /:shortCode and query the Redis DB.  
+Database Fallback: If a cache miss occurs, the system query must fall back to the Supabase PostgreSQL database.  
+Non-Blocking Cache Populate: Upon a successful database retrieval, the system will trigger a background cache write (with a 24-hour TTL). Crucially, this operation must not be awaited, allowing the redirection response to be returned to the client instantly without waiting for the Redis network round-trip.
 
+**ES_004: Vercel Analytics Integration**  
+As an Engineering Team, we need to implement Vercel Analytics directly into the UI application layer to capture real-time client-side performance, session details, and geographic distribution without utilizing server compute resources.  
+**E1**: Integrate Vercel Analytics injecting the required dependencies to capture client-side analytics.   
+
+**User Stories:**
+**US_004: Administrative Analytics Dashboard**  
+As an Admin of this application, I want to view visitor analytics, page views, and bounce rates as a time-series graph directly within my Vercel account, so that I can monitor traffic trends and user engagement metrics to optimize the platform performance.  
+_Acceptance Criteria:_
+**AC1**: Given that Vercel Analytics is enabled for the project, when I log into the Vercel dashboard and navigate to the "Analytics" tab, then I must be able to view a time-series graph displaying Visitor counts, total Page Views, and Bounce Rates.  
+**AC2**: Given that I am viewing the analytics graph, when I adjust the date-range picker, then the time-series graph must dynamically refresh to show the data corresponding to the selected timeframe.  
+ 
 ### 4.2 Quality Gates & Refactoring Safety
-To safely refactor the codebase for analytics integration, the following engineering quality gates were enforced:
+To safely refactor the codebase for redis implementation and analytics integration, the following engineering quality gates were enforced:
 * **Strict Type Auditing:** All updated modules were processed through the TypeScript compiler (`tsc --noEmit`) to guarantee that modifications to database schemas did not break existing controller contracts.
-* **Automated Regression Testing:** The existing Jest suite was run before and after code changes to confirm that the core URL creation and path redirection functionality remained intact.
+* **Automated Unit Testing:** The existing Unit test suite was run before and after code changes to confirm that o verify that individual, isolated components of code work exactly as intended.  
 
 ---
 
-## 5. Scenario 3: Ambiguous Requirement Resolution
 
-### 5.1 Custom Short URL Aliases
-* **The Ambiguity:** High-level requirements stated that users should find the service "intuitive and personalized," which left the path open for custom branding features.
-* **Engineering Resolution:** This was normalized into an explicit engineering constraint: **Custom Short URL Aliases**. To respect the operational timeline and prevent a complex database migration, the feature was engineered using the existing database schema.
-* **Implementation Strategy:** Custom strings provided by the user bypass the sequential numerical Base62 conversion. Instead, the service performs a fast unique check directly on the `urls` table. If the custom string is available, it is inserted directly as the unique identifier. This elegant solution provides an advanced product feature with zero database structural changes.
-
----
-
-## 6. Validation, Risk Control & Failure Scenarios
+## 5. Validation, Risk Control & Failure Scenarios
 
 | Identified Risk / Failure | System Mitigation Guardrail | Operational Behavior |
 | :--- | :--- | :--- |
@@ -172,22 +181,22 @@ To safely refactor the codebase for analytics integration, the following enginee
 | **Non-Existent Short Code Lookup** | Strict Record Existence Validation | Returns an explicit HTTP 404 error along with a user-friendly error message, preventing application instability. |
 | **Malicious URL Injections / XSS** | Contextual Schema Escaping | Incoming strings are completely sanitized via rigid Fastify input type verification before database query binding. |
 
-### 6.1 Testing Methodology
-* **Unit Tests (`npm run test`):** Validates isolated business rules, alphabet indexing bounds, and mathematical Base62 conversions using Jest.
-* **Functional Tests:** Validates correct API responses against formal JSON schema definitions for the `/api/shorten` routes.
+### 5.1 Testing Methodology
+* **Unit Tests:** Tests cover all public methods and edge cases (invalid inputs, nulls, boundary conditions). Mocks external dependencies like Supabase or Redis to keep these true unit tests. Reference the acceptance criteria. Executed using Jest.  
+* **Functional Tests:** Test the individual user stories to ensure a working feature.  
 * **Integration Tests:** Validates end-to-end request pipelines, verifying that a `POST` request correctly creates a record in Supabase that a subsequent `GET` request can successfully resolve.
 
 ---
 
-## 7. Setup & Execution Instructions
+## 6. Setup & Execution Instructions
 
-### 7.1 Prerequisites
+### 6.1 Prerequisites
 * **Node.js Runtime:** v18.x or later installed locally.
 * **Package Manager:** `npm` or `yarn`.
 * **Database:** A valid PostgreSQL instance connection string (provided via Supabase).
 * **Cache Provider:** An active Redis server endpoint instance.
 
-### 7.2 Step-by-Step Installation
+### 6.2 Step-by-Step Installation
 1.  **Clone the project repository and open the project root directory:**
     ```bash
     git clone [https://github.com/your-repo/url-shortener.git](https://github.com/your-repo/url-shortener.git)
@@ -214,7 +223,7 @@ To safely refactor the codebase for analytics integration, the following enginee
     npm run test
     ```
 
-### 7.3 API Reference & Usage Examples
+### 6.3 API Reference & Usage Examples
 
 #### Create a Shortened URL
 ```bash
