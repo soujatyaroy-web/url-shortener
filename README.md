@@ -20,29 +20,34 @@ To protect the database state layers under peak read amplification, the redirect
 2.  **Database Fallback on Cache Miss:** If the short code is missing from Redis, the application falls back to a Supabase PostgreSQL query to fetch the original `long_url`.
 3.  **Non-Blocking Background Write:** To eliminate thread blockages, the database result triggers an asynchronous, non-blocking cache set command (`SETEX`). By omitting the `await` keyword on the cache update, the thread bypasses the Redis network round-trip and immediately executes the HTTP 302 redirection back to the user without blocking the lifecycle.
 
-4.  +-----------------------------------+
-              |          FRONTEND LAYER           |
-              |     Hosted on Vercel Edge Net     |
-              |  (Static HTML/CSS/JS + Analytics)  |
-              +-----------------+-----------------+
-                                |
-                                | HTTPS API Requests
-                                v
-              +-----------------------------------+
-              |           BACKEND LAYER           |
-              |        Render Web Service         |
-              |  (Node.js + TypeScript + Fastify) |
-              +--------+-----------------+--------+
-                       |                 |
-     1. Read First /   |                 | 2. Fallback on
-     3. Async Cache    |                 |    Cache Miss
-        Write          v                 v
-              +--------+--------+  +-----+------------+
-              |   CACHE LAYER   |  |    DATA LAYER    |
-              |  Redis Cluster  |  |  Supabase Cloud  |
-              | (24-Hour TTL)   |  |  PostgreSQL DB   |
-              +-----------------+  +------------------+
+4.```
++-----------------------------------+  
 
+              |          FRONTEND LAYER           |  
+              |     Hosted on Vercel Edge Net     |  
+              |  (Static HTML/CSS/JS + Analytics)  |  
+              +-----------------+-----------------+  
+                                |  
+                                | HTTPS API Requests  
+                                v  
+              +-----------------------------------+  
+
+              |           BACKEND LAYER           |  
+              |        Render Web Service         |  
+              |  (Node.js + TypeScript + Fastify) |  
+              +--------+-----------------+--------+  
+
+                       |                 |  
+     1. Read First /   |                 | 2. Fallback on  
+     3. Async Cache    |                 |    Cache Miss  
+        Write          v                 v  
+              +--------+--------+  +-----+------------+  
+
+              |   CACHE LAYER   |  |    DATA LAYER    |  
+              |  Redis Cluster  |  |  Supabase Cloud  |  
+              | (24-Hour TTL)   |  |  PostgreSQL DB   |  
+              +-----------------+  +------------------+
+```
 ### 1.3 Technical Stack Justification
 * **Runtime & Language:** **Node.js (TypeScript)**. Combines the non-blocking, event-driven asynchronous I/O of Node with strict compile-time type safety, entirely eliminating runtime reference exceptions and standard structural regressions.
 * **Web Framework:** **Fastify**. Selected over traditional frameworks like Express due to its ultra-low routing overhead, built-in encapsulated plugin model, and accelerated Ajv-driven JSON schema validation engine.
@@ -68,49 +73,53 @@ The baseline specification required converting an arbitrary URL into a shortened
 
 ### 3.2 Task Decomposition
 **User Stories:**
-**US_001: View the URL Shortener page** 
-As a user, I want to enter a long URL and view the "Shorten URL" button, so that I submit the long URL to get a short URL.
-_Acceptance Criteria:_
-AC1: Given the page is loaded, when the user reads the top header, then the title "URL Shortener" must be visible, followed by the sub-instruction: "Submit a long URL and get a clean, shareable short link". 
-AC2: Given the user is identifying the input area, when they look above the text area, then the label "Enter your long URL" must be clearly positioned. 
-AC3: Given the "URL Shortener" page is loaded, when the user views the "Enter your long URL" area, then it must be a multi-line text box capable of accepting up to 2,048 characters .
-AC4: Given the user is typing, when characters are entered, then the counter at the bottom-left corner must update in real-time to display the current character count relative to the 2,048 limit (e.g., "5 / 2048"). 
-AC5: Given the user is viewing the page, when they look at the bottom-right corner of the text area, then they must see the instructional text: "Must begin with http:// or https://". 
-AC6: Given the user has entered content, when they look at the button below the text area, then it must be labeled "Shorten URL" and span the full width of the input area.
-**US_002: Validate Entered URL**
-As a user, I want to receive a warning if my URL does not start with the correct protocol or is invalid, so that I can rectify the url.
-_Acceptance Criteria:_
-AC1: Given I have entered a URL that does not begin with "http://" or "https://",
-whenI click the "Shorten URL" button, then the system should display an error message stating "URL must start with http:// or https://.".
-AC2: Given I have entered a URL that starts with "http://" but is otherwise malformed or invalid,
-when I click the "Shorten URL" button, then the system should display an error message below the Shorten URL button stating "Please enter a valid URL before submitting.".
-**US_003: Generate Short URL**
-As a user, I want to submit a long URL and receive a shortened link, so that I can share my content using a compact, clean URL. 
-_Acceptance Criteria:_
-AC1: Given I have submitted a valid long URL, when the URL is saved to the database, then the system must retrieve the Primary Key (ID) of the new row and convert it to a Base62 string (using the charset 0-9, a-z, A-Z) to create the unique token.
-Example for QA: If the Primary Key is 12345, the Base62 encoding logic should be:
-$12345 \div 62 = 199$ remainder $7$ (Char: '7')
-$199 \div 62 = 3$ remainder $13$ (Char: 'd')
-$3 \div 62 = 0$ remainder $3$ (Char: '3')
-Resulting Token: Reverse of remainder chain $\rightarrow$ 3d7
-AC2: Given the application has been active (i.e., the "Shorten URL" button has been clicked by someone within the last 15 minutes), when I click the "Shorten URL" button, then the response containing the Short URL must be rendered in less than equal to 2 seconds.
-AC3: Given the application has been inactive for more than 15 minutes (i.e., no clicks on the "Shorten URL" button during this period), when I click the "Shorten URL" button, then the response may be delayed due to cold-start overhead, but must be rendered in less than equal to 60 seconds.
-AC4: Given a generated Short URL, when I copy and paste it into a browser, then the system must correctly decode the Base62 token back to the specific Primary Key and redirect me to the original long URL stored in the database.
+**US_001: View the URL Shortener page**  
+As a user, I want to enter a long URL and view the "Shorten URL" button, so that I submit the long URL to get a short URL.  
 
-**Enabler Story**
-**ES_001: Base62 Implementation & Cold-Start Tuning**
-As an Engineering Team, we need to implement the Base62 conversion logic and configure infrastructure cold-start behaviors, so that we satisfy both the performance SLA for active users and the cold-start constraints for inactive periods.
-E1: The Base62 encoding service is implemented and unit-tested against various integer inputs (including edge cases like 0, 1, and large integers exceeding 1,000,000). 
-E2: The system infrastructure is configured to identify the 15-minute inactivity window and manage "warm-up" time for the database connection and application server during cold starts.
-**ES_002: Database Schema Definition & Implementation** 
-As an Engineering Team, we need to define the “urls” table schema in our relational database as specified in the technical design, so that we have a persistent, structured foundation for storing URL mappings, tracking metadata, and supporting the Base62 encoding retrieval logic. 
-E1: The urls table must be created with the following columns and data types:
-id: int8 (Primary Key, Auto-increment/Serial)
-long_url: text (Required/Not Null)
-short_code: varchar (Unique Index, to store the Base62 encoded string)
-created_at: timestamptz (Default: NOW())
-expires_at: timestamptz
-E2: An index must be applied to the short_code column to ensure that redirect resolutions (looking up long_url by short_code) perform in $O(1)$ or $O(\log n)$ time, maintaining the required SLA. 
+_Acceptance Criteria:_  
+**AC1**: Given the page is loaded, when the user reads the top header, then the title "URL Shortener" must be visible, followed by the sub-instruction: "Submit a long URL and get a clean, shareable short link".  
+**AC2**: Given the user is identifying the input area, when they look above the text area, then the label "Enter your long URL" must be clearly positioned.   
+**AC3**: Given the "URL Shortener" page is loaded, when the user views the "Enter your long URL" area, then it must be a multi-line text box capable of accepting up to 2,048 characters .  
+**AC4**: Given the user is typing, when characters are entered, then the counter at the bottom-left corner must update in real-time to display the current character count relative to the 2,048 limit (e.g., "5 / 2048").   
+**AC5**: Given the user is viewing the page, when they look at the bottom-right corner of the text area, then they must see the instructional text: "Must begin with http:// or https://".   
+**AC6**: Given the user has entered content, when they look at the button below the text area, then it must be labeled "Shorten URL" and span the full width of the input area.  
+**US_002: Validate Entered URL**  
+As a user, I want to receive a warning if my URL does not start with the correct protocol or is invalid, so that I can rectify the url.  
+
+_Acceptance Criteria:_  
+**AC1**: Given I have entered a URL that does not begin with "http://" or "https://",
+whenI click the "Shorten URL" button, then the system should display an error message stating "URL must start with http:// or https://.".  
+**AC2**: Given I have entered a URL that starts with "http://" but is otherwise malformed or invalid,
+when I click the "Shorten URL" button, then the system should display an error message below the Shorten URL button stating "Please enter a valid URL before submitting.".  
+
+**US_003: Generate Short URL**  
+As a user, I want to submit a long URL and receive a shortened link, so that I can share my content using a compact, clean URL.   
+
+_Acceptance Criteria:_  
+**AC1**: Given I have submitted a valid long URL, when the URL is saved to the database, then the system must retrieve the Primary Key (ID) of the new row and convert it to a Base62 string (using the charset 0-9, a-z, A-Z) to create the unique token.  
+Example for QA: If the Primary Key is 12345, the Base62 encoding logic should be:  
+$12345 \div 62 = 199$ remainder $7$ (Char: '7')  
+$199 \div 62 = 3$ remainder $13$ (Char: 'd')  
+$3 \div 62 = 0$ remainder $3$ (Char: '3')  
+Resulting Token: Reverse of remainder chain $\rightarrow$ 3d7  
+**AC2**: Given the application has been active (i.e., the "Shorten URL" button has been clicked by someone within the last 15 minutes), when I click the "Shorten URL" button, then the response containing the Short URL must be rendered in less than equal to 2 seconds.  
+**AC3**: Given the application has been inactive for more than 15 minutes (i.e., no clicks on the "Shorten URL" button during this period), when I click the "Shorten URL" button, then the response may be delayed due to cold-start overhead, but must be rendered in less than equal to 60 seconds.  
+**AC4**: Given a generated Short URL, when I copy and paste it into a browser, then the system must correctly decode the Base62 token back to the specific Primary Key and redirect me to the original long URL stored in the database.  
+
+**Enabler Story**  
+**ES_001: Base62 Implementation & Cold-Start Tuning**  
+As an Engineering Team, we need to implement the Base62 conversion logic and configure infrastructure cold-start behaviors, so that we satisfy both the performance SLA for active users and the cold-start constraints for inactive periods.  
+**E1**: The Base62 encoding service is implemented and unit-tested against various integer inputs (including edge cases like 0, 1, and large integers exceeding 1,000,000).   
+**E2**: The system infrastructure is configured to identify the 15-minute inactivity window and manage "warm-up" time for the database connection and application server during cold starts.  
+**ES_002: Database Schema Definition & Implementation**   
+As an Engineering Team, we need to define the “urls” table schema in our relational database as specified in the technical design, so that we have a persistent, structured foundation for storing URL mappings, tracking metadata, and supporting the Base62 encoding retrieval logic.   
+**E1**: The urls table must be created with the following columns and data types:  
+id: int8 (Primary Key, Auto-increment/Serial)  
+long_url: text (Required/Not Null)  
+short_code: varchar (Unique Index, to store the Base62 encoded string)  
+created_at: timestamptz (Default: NOW())   
+expires_at: timestamptz  
+**E2**: An index must be applied to the short_code column to ensure that redirect resolutions (looking up long_url by short_code) perform in $O(1)$ or $O(\log n)$ time, maintaining the required SLA.   
 
 ### 3.3 AI Execution Traceability
 * **Intent:** Leverage Copilot to implement the mathematical Base62 conversions safely.
