@@ -60,10 +60,12 @@ To protect the database state layers under peak read amplification, the redirect
 
 This prototype was developed utilizing a disciplined **Engineer-in-the-Loop** execution framework, treating generative AI tools strictly as high-leverage accelerators while maintaining complete human ownership over architectural boundaries, code correctness, and quality gates.
 
-* **Strategic Requirement Normalization (Gemini):** Gemini was tasked with translating high-level business use cases into an exhaustive Product Requirement Document (PRD). This PRD was programmatically decomposed into precise Agile User Stories and functional Enabler Stories.
-* **Implementation Acceleration (GitHub Copilot):** GitHub Copilot was utilized within the IDE to generate deterministic boilerplate logic, including Fastify route schemas, Base62 translation utilities, and front-end state management event listeners.
-* **Quality Assurance & Test Automation:** Copilot was instructed to generate comprehensive **Jest unit test suites** mapping directly to the validation criteria of each user story.
-* **Human-Led Quality Gates:** Human oversight was rigorously applied at every transition point. No AI-generated artifact was committed without a manual code review, validation schema adjustments, and empirical testing against the target environment.
+* **Strategic Requirement Normalization (Gemini):** Gemini was tasked with translating high-level business use cases into an exhaustive Product Requirement Document (PRD). This PRD was again fed to Gemini to decompose into precise functional User Stories and technical Enabler Stories.
+* **Implementation Acceleration (GitHub Copilot):** GitHub Copilot was utilized within the IDE to generate deterministic boilerplate logic, including Fastify route schemas, Base62 translation utilities, url redirection service and front-end template.
+* **Quality Assurance & Test Automation:** Copilot was instructed to generate comprehensive **Jest unit test suites** mapping with comprehensive coverage of methods and boundary inputs referencing the criteria of each user story.
+* **Human-Led Quality Gates:** Human oversight was rigorously applied at every transition point. No AI-generated artifact was committed without a manual code review and empirical testing.   
+
+**Note**: The AI_TRACEABILITY_LOG.md file notes the prompts and revision.
 
 ---
 
