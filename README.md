@@ -12,9 +12,7 @@ The platform architecture is structured as a completely decoupled, modern three-
 * **Frontend Layer (Vercel):** Deployed as a pure static web application on Vercel’s global Edge Network. This guarantees near-zero millisecond static asset loading times worldwide and completely unburdens the active API container from static content routing.
 * **Backend Layer (Render):** Deployed as an isolated, persistent Web Service on Render. Node.js with TypeScript processes workloads asynchronously via Fastify’s single-threaded event loop, maximizing concurrent connection capabilities on constrained infrastructure.
 * **Data Layer (Supabase / PostgreSQL):** A managed, ACID-compliant cloud PostgreSQL instance hosted on Supabase. This infrastructure ensures relational integrity, transactional consistency, and predictable $O(\log N)$ lookups using explicit indexes on URL mapping entries.
-
-### 1.2 Performance Layer: Dual-Stage Read/Write Caching
-To protect the database state layers under peak read amplification, the redirection mechanism leverages an out-of-band caching tier configured with a **24-hour Time-to-Live (TTL)**:
+* **Performance & Caching Layer (Upstream Redis):** To protect the database state layers under peak read amplification, the redirection mechanism leverages an out-of-band caching tier configured with a **24-hour Time-to-Live (TTL)**:
 
 1.  **Cache Read First:** When a short code redirection request hits `GET /:shortCode`, the backend performs an immediate $O(1)$ read lookup from an active **iORedis** connection pool.
 2.  **Database Fallback on Cache Miss:** If the short code is missing from Redis, the application falls back to a Supabase PostgreSQL query to fetch the original `long_url`.
