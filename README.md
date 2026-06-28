@@ -33,9 +33,9 @@ When a user has a long, unwieldy URL that needs to be shared across character-co
 
 
 ---
-## 1. System Architecture Overview
+## System Architecture Overview
 
-### 1.1 Deployment & Infrastructure Strategy
+### Deployment & Infrastructure Strategy
 The platform architecture is structured as a completely decoupled, modern three-tier infrastructure designed for high throughput, minimal operational contention, and near-zero latency redirection pathways:
 
 * **Frontend Layer (Vercel):** Deployed as a pure static web application on Vercel’s global Edge Network. This guarantees near-zero millisecond static asset loading times worldwide and completely unburdens the active API container from static content routing.
@@ -47,7 +47,7 @@ The platform architecture is structured as a completely decoupled, modern three-
 2.  **Database Fallback on Cache Miss:** If the short code is missing from Redis, the application falls back to a Supabase PostgreSQL query to fetch the original `long_url`.
 3.  **Non-Blocking Background Write:** To eliminate thread blockages, the database result triggers an asynchronous, non-blocking cache set command (`SETEX`). By omitting the `await` keyword on the cache update, the thread bypasses the Redis network round-trip and immediately executes the HTTP 302 redirection back to the user without blocking the lifecycle.
 
-4.```
+   ```
 +-----------------------------------+  
 
               |          FRONTEND LAYER           |  
@@ -75,11 +75,11 @@ The platform architecture is structured as a completely decoupled, modern three-
               | (24-Hour TTL)   |  |  PostgreSQL DB   |  
               +-----------------+  +------------------+
 ```
-```
-### 1.3 Technical Stack & KDD
-* **Runtime & Language:** **Node.js (TypeScript)**. Combines the non-blocking, event-driven asynchronous I/O of Node with strict compile-time type safety, entirely eliminating runtime reference exceptions and standard structural regressions.
-* **Web Framework:** **Fastify**. Selected over traditional frameworks like Express due to its ultra-low routing overhead, built-in encapsulated plugin model, and accelerated Ajv-driven JSON schema validation engine.
-* **Database Interface:** **Supabase JS Client**. Leverages a highly optimized client interface for structured data operations, optimizing payload size and connection utilization over long-lived stateful TCP pools.
+``
+### Technical Stack & KDD
+* **Runtime & Language:** **Node.js (TypeScript)**. The combination of Node.js's I/O performance and TypeScript's compile-time safety provides the most robust foundation for rapid prototyping.
+* **Web Framework:** **Fastify**. Highly reliable code made Fastify’s strict schema enforcement and superior baseline performance the optimal choice.  
+* **Database Interface:** **Supabase JS Client**. The acceleration in delivery speed and built-in scalability mechanisms.
 
 **KDD1: Short Code Generation Approach**
 
@@ -106,7 +106,7 @@ _Cons:_ Slightly higher deployment and configuration effort.
 **Decision Summary: Option B**: Inclusion of an asynchronous cache layer provides reliability and improved performance.
 
 
-## 2. AI-Assisted Engineering Framework
+## AI-Assisted Engineering Framework
 
 This prototype was developed utilizing a disciplined **Engineer-in-the-Loop** execution framework, treating generative AI tools strictly as high-leverage accelerators while maintaining complete human ownership over architectural boundaries, code correctness, and quality gates.
 
@@ -119,12 +119,12 @@ This prototype was developed utilizing a disciplined **Engineer-in-the-Loop** ex
 
 ---
 
-## 3. Scenario 1: Core URL Shortener
+## Scenario 1: Core URL Shortener
 
-### 3.1 Requirements
+### Requirements
 Ability to convert an arbitrary URL into a shortened, shareable token with necessary input validations and redirection to the original url from the short url.  
 
-### 3.2 Task Decomposition
+### Task Decomposition
 **User Stories:**
 **US_001: View the URL Shortener page**  
 As a user, I want to enter a long URL and view the "Shorten URL" button, so that I submit the long URL to get a short URL.  
@@ -182,7 +182,7 @@ created_at: timestamptz (Default: NOW())
 expires_at: timestamptz  
 **E2**: An index must be applied to the short_code column to ensure that redirect resolutions (looking up long_url by short_code) perform in $O(1)$ or $O(\log n)$ time, maintaining the required SLA.  
 
-### 3.3 Input Validation Guardrails
+### Input Validation Guardrails
 The system implements strict, layered input-validation routines on the backend to prevent corrupted records or malicious injection attacks from interacting with the data layer:
 * **Syntactic Validation:** Rejects any input lacking explicit structural protocols. Returning:
     ```json
@@ -195,12 +195,12 @@ The system implements strict, layered input-validation routines on the backend t
 
 ---
 
-## 4. Scenario 2: Analytics & Caching
+## Scenario 2: Analytics & Caching
 
-### 4.1 Requirement
+### Requirement
 Integrating analytical telemetry using Vercel Analytics to the existing frontend components and introducing Redis cache for redirection performance improvement
 
-### 4.3 Task Decomposition
+### Task Decomposition
 **Enabler Story**  
 **ES_003: Redis Cache Implementation**  
 As an Engineering Team, we need to implement the integrate an in-memory Redis caching tier with a 24-hour Time-to-Live (TTL) into the redirection path, so that we can achieve O(1) read lookups, optimize response times under peak read amplification, and protect the Supabase PostgreSQL database from connection thrashing.  
@@ -219,7 +219,7 @@ _Acceptance Criteria:_
 **AC1**: Given that Vercel Analytics is enabled for the project, when I log into the Vercel dashboard and navigate to the "Analytics" tab, then I must be able to view a time-series graph displaying Visitor counts, total Page Views, and Bounce Rates.  
 **AC2**: Given that I am viewing the analytics graph, when I adjust the date-range picker, then the time-series graph must dynamically refresh to show the data corresponding to the selected timeframe.  
  
-### 4.2 Quality Gates
+### Quality Gates
 To safely refactor the codebase for redis implementation and analytics integration, the following engineering quality gates were enforced:
 * **Strict Type Auditing:** All updated modules were processed through the TypeScript compiler (`tsc --noEmit`) to guarantee that modifications to database schemas did not break existing controller contracts.
 * **Automated Unit Testing:** The existing Unit test suite was run before and after code changes to confirm that o verify that individual, isolated components of code work exactly as intended.  
@@ -227,7 +227,7 @@ To safely refactor the codebase for redis implementation and analytics integrati
 ---
 
 
-### 📋 RAID Log (Risks, Assumptions, Issues, Dependencies)
+### RAID Log (Risks, Assumptions, Issues, Dependencies)
 
 | Category | ID | Item Description | Impact / Rationale | Mitigation / Resolution Strategy |
 | :--- | :--- | :--- | :--- | :--- |
@@ -240,30 +240,23 @@ To safely refactor the codebase for redis implementation and analytics integrati
 
 
 
-## 5. Validation, Risk Control & Failure Scenarios
 
-| Identified Risk / Failure | System Mitigation Guardrail | Operational Behavior |
-| :--- | :--- | :--- |
-| **Supabase Connection Latency / Timeout** | Database Connection Timeout Gates | Intercepts connection hangs gracefully, serving an HTTP 503 Service Unavailable error instead of leaking internal stacks. |
-| **Non-Existent Short Code Lookup** | Strict Record Existence Validation | Returns an explicit HTTP 404 error along with a user-friendly error message, preventing application instability. |
-| **Malicious URL Injections / XSS** | Contextual Schema Escaping | Incoming strings are completely sanitized via rigid Fastify input type verification before database query binding. |
-
-### 5.1 Testing Methodology
+### Testing Methodology
 * **Unit Tests:** Tests cover all public methods and edge cases (invalid inputs, nulls, boundary conditions). Mocks external dependencies like Supabase or Redis to keep these true unit tests. Reference the acceptance criteria. Executed using Jest.  
 * **Functional Tests:** Test the individual user stories to ensure a working feature.  
 * **Integration Tests:** Validates end-to-end request pipelines, verifying that a `POST` request correctly creates a record in Supabase that a subsequent `GET` request can successfully resolve.
 
 ---
 
-## 6. Setup & Execution Instructions
+## Setup & Execution Instructions
 
-### 6.1 Prerequisites
+### Prerequisites
 * **Node.js Runtime:** v18.x or later installed locally.
-* **Package Manager:** `npm` or `yarn`.
+* **Package Manager:** `npm`.
 * **Database:** A valid PostgreSQL instance connection string (provided via Supabase).
 * **Cache Provider:** An active Redis server endpoint instance.
 
-### 6.2 Step-by-Step Installation
+### Step-by-Step Installation
 1.  **Clone the project repository and open the project root directory:**
     ```bash
     git clone [https://github.com/soujatyaroy-web/url-shortener.git]([https://github.com/soujatyaroy-web/url-shortener.git])
@@ -290,7 +283,7 @@ To safely refactor the codebase for redis implementation and analytics integrati
     npm run test
     ```
 
-### 6.3 API Reference & Usage Examples
+### API Reference & Usage Examples
 
 #### Create a Shortened URL
 ```bash
