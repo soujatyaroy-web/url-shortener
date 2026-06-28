@@ -3,7 +3,26 @@
 A production-grade URL shortener service engineered for high throughput, structural integrity, and minimal redirection latency. This platform utilizes a modern three-tier decoupled architecture to separate static front-end asset delivery from highly optimized, type-safe backend execution paths.
 
 ---
+## Product Use Case Definition
 
+When a user has a long, unwieldy URL that needs to be shared across character-constrained or visually public channels, they want to submit the URL to a reliable compression service that converts it into a shorter version, so that they can distribute a clean, shareable link. When the user clicks on the shortened url, they want to be forwarded to their original destination instantly.  
+
+## Success Metric
+**Link Creation Volume**: Total number of URLs generated per day  
+**Daily Active User**: Total number of unique users who perform Shorten URL action within a single 24-hour window.  
+**Click-Through Rate**: The percentage of users who click on Shorten URL action out of total page views.  
+**Link Generation Latency**: The time it takes to generate and display back a short link on submit of of long url.  
+**Redirection Latency**: The time it takes to map a short link to a long URL  
+
+## Out of Scope   
+**User Authentication & Session Management**: No multi-tenant user accounts, login flows, or secure cookie sessions will be introduced in this phase.
+**Link Expiration & Automatic Cleanup Automation**: Granular cron-job deletion of expired links or database table vacuums are omitted from this current core iteration.  
+**Custom Branded Domains**: Users cannot put up their own domains. Everything goes through a mock base domain.  
+**Deep User Dashboard**: No complex frontend visualization engine, charts, or geographic maps in this initial version.
+
+
+
+---
 ## 1. System Architecture Overview
 
 ### 1.1 Deployment & Infrastructure Strategy
