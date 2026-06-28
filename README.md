@@ -21,6 +21,11 @@ When a user has a long, unwieldy URL that needs to be shared across character-co
 **URL Redirection** _(Must-have)_: The system can redirect the short url to the actual destination.  
 **Usage Analytics** _(Could-have_): The system should be able top track the number of page views & click-through rate.
 
+## Assumption  
+**Device Distribution**: We assume a highly fragmented device landscape where approximately 80% of our active users shorten or click links via desktop or laptop environments, while 20% operate from mobile view.  
+**Browser Footprint**: Our core target audience operates on modern, updated devices. We assume compatibility only with "evergreen" browsers (Chrome, Safari, Edge, Firefox) released within the last 3 years.  
+
+
 
 ## Out of Scope   
 **User Authentication & Session Management**: No multi-tenant user accounts, login flows, or secure cookie sessions will be introduced in this phase.  
