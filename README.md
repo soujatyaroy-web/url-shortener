@@ -14,11 +14,21 @@ When a user has a long, unwieldy URL that needs to be shared across character-co
 **Link Generation Latency**: The time it takes to generate and display back a short link on submit of of long url.  
 **Redirection Latency**: The time it takes to map a short link to a long URL  
 
+## High Level Functional Requirements  
+**URL Length & Input Capacity** _(Must-have)_: The system can easily accept and process exceptionally long web addresses(up to 2,048 characters).  
+**URL Validation** _(Must-have)_: The system checks incoming links to make sure they are rightly formatted and valid.
+**URL Shortening** _(Must-have)_: The system creates short, reliable web links that never overlap or overwrite each other.  
+**URL Redirection** _(Must-have)_: The system can redirect the short url to the actual destination.  
+**Usage Analytics** _(Could-have_): The system should be able top track the number of page views & click-through rate.
+
+
 ## Out of Scope   
-**User Authentication & Session Management**: No multi-tenant user accounts, login flows, or secure cookie sessions will be introduced in this phase.
+**User Authentication & Session Management**: No multi-tenant user accounts, login flows, or secure cookie sessions will be introduced in this phase.  
 **Link Expiration & Automatic Cleanup Automation**: Granular cron-job deletion of expired links or database table vacuums are omitted from this current core iteration.  
 **Custom Branded Domains**: Users cannot put up their own domains. Everything goes through a mock base domain.  
-**Deep User Dashboard**: No complex frontend visualization engine, charts, or geographic maps in this initial version.
+**Deep User Dashboard**: No complex frontend visualization engine, charts, or geographic maps in this initial version.  
+
+
 
 
 
