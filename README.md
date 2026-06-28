@@ -226,7 +226,7 @@ To safely refactor the codebase for redis implementation and analytics integrati
 ### 6.2 Step-by-Step Installation
 1.  **Clone the project repository and open the project root directory:**
     ```bash
-    git clone [https://github.com/your-repo/url-shortener.git](https://github.com/your-repo/url-shortener.git)
+    git clone [https://github.com/soujatyaroy-web/url-shortener.git]([https://github.com/soujatyaroy-web/url-shortener.git])
     cd url-shortener
     ```
 2.  **Install project dependencies:**
