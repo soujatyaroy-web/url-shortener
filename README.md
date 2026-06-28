@@ -219,10 +219,12 @@ _Acceptance Criteria:_
 **AC1**: Given that Vercel Analytics is enabled for the project, when I log into the Vercel dashboard and navigate to the "Analytics" tab, then I must be able to view a time-series graph displaying Visitor counts, total Page Views, and Bounce Rates.  
 **AC2**: Given that I am viewing the analytics graph, when I adjust the date-range picker, then the time-series graph must dynamically refresh to show the data corresponding to the selected timeframe.  
  
-### Quality Gates
+### Quality Gates & Testing Approach
 To safely refactor the codebase for redis implementation and analytics integration, the following engineering quality gates were enforced:
 * **Strict Type Auditing:** All updated modules were processed through the TypeScript compiler (`tsc --noEmit`) to guarantee that modifications to database schemas did not break existing controller contracts.
-* **Automated Unit Testing:** The existing Unit test suite was run before and after code changes to confirm that o verify that individual, isolated components of code work exactly as intended.  
+* **Automated Unit Testing:** The existing Unit test suite was run before and after code changes to verify that individual, isolated components of code work exactly as intended, covering all public methods and edge cases (invalid inputs, nulls, boundary conditions).
+* **Functional Tests:** Test the individual user stories to ensure a working feature.  
+* **Integration Tests:** Validates end-to-end request pipelines, verifying that a `POST` request correctly creates a record in Supabase that a subsequent `GET` request can successfully resolve.
 
 ---
 
@@ -241,10 +243,6 @@ To safely refactor the codebase for redis implementation and analytics integrati
 
 
 
-### Testing Methodology
-* **Unit Tests:** Tests cover all public methods and edge cases (invalid inputs, nulls, boundary conditions). Mocks external dependencies like Supabase or Redis to keep these true unit tests. Reference the acceptance criteria. Executed using Jest.  
-* **Functional Tests:** Test the individual user stories to ensure a working feature.  
-* **Integration Tests:** Validates end-to-end request pipelines, verifying that a `POST` request correctly creates a record in Supabase that a subsequent `GET` request can successfully resolve.
 
 ---
 
